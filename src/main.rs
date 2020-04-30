@@ -448,7 +448,7 @@ fn main() {
         show_shape(&current_shape);
         show_count_and_next(&count, &next_shape);
         refresh();
-        while getch() != -1 {}
+        while getch() != -1 {};
         unsafe {
             usleep(500000);
         }
