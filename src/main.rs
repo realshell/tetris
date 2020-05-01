@@ -10,9 +10,6 @@ struct Point {
     y: i32,
 }
 
-type Shape = Vec<Point>;
-type Board = Vec<Point>;
-
 #[derive(PartialEq)]
 enum Dir {
     UP,
@@ -21,10 +18,10 @@ enum Dir {
     RIGHT,
 }
 
-fn is_intersect(current_shape: &Shape, board: &Board) -> bool {
-    for i in 0..current_shape.len() {
-        for j in 0..board.len() {
-            if current_shape[i].x == board[j].x && current_shape[i].y == board[j].y {
+fn is_intersect(current_shape: &[Point], board: &[Point]) -> bool {
+    for i in current_shape {
+        for j in board {
+            if i.x == j.x && i.y == j.y {
                 return true;
             }
         }
@@ -39,7 +36,7 @@ fn rotate90_point(point: Point, center: Point) -> Point {
     }
 }
 
-fn next_move(dir: Dir, shape: &Shape) -> Option<Shape> {
+fn next_move(dir: Dir, shape: &[Point]) -> Option<Vec<Point>> {
     match dir {
         Dir::UP => {
             let first_element = shape[0];
@@ -47,18 +44,18 @@ fn next_move(dir: Dir, shape: &Shape) -> Option<Shape> {
             let mut x_max = first_element.x;
             let mut y_min = first_element.y;
             let mut y_max = first_element.y;
-            for i in 0..shape.len() {
-                if shape[i].x < x_min {
-                    x_min = shape[i].x;
+            for e in shape {
+                if e.x < x_min {
+                    x_min = e.x;
                 }
-                if shape[i].x > x_max {
-                    x_max = shape[i].x;
+                if e.x > x_max {
+                    x_max = e.x;
                 }
-                if shape[i].y < y_min {
-                    y_min = shape[i].y;
+                if e.y < y_min {
+                    y_min = e.y;
                 }
-                if shape[i].y > y_max {
-                    y_max = shape[i].y;
+                if e.y > y_max {
+                    y_max = e.y;
                 }
             }
             let rotate_center_point = Point {
@@ -66,54 +63,51 @@ fn next_move(dir: Dir, shape: &Shape) -> Option<Shape> {
                 y: (y_max + y_min) / 2,
             };
             let mut new_shape = Vec::new();
-            for i in 0..shape.len() {
-                new_shape.push(rotate90_point(shape[i], rotate_center_point));
+            for e in shape {
+                new_shape.push(rotate90_point(*e, rotate_center_point));
             }
             let left_limit = 1;
             let right_limt = 10;
             let down_limit = 17;
-            for i in 0..new_shape.len() {
-                if new_shape[i].x < left_limit
-                    || new_shape[i].x > right_limt
-                    || new_shape[i].y > down_limit
-                {
+            for e in &new_shape {
+                if e.x < left_limit || e.x > right_limt || e.y > down_limit {
                     return None;
                 }
             }
-            return Some(new_shape);
+            Some(new_shape)
         }
         Dir::DOWN => {
-            let mut new_shape = shape.clone();
+            let mut new_shape = shape.to_owned();
             let down_limt = 17;
-            for i in 0..new_shape.len() {
-                if new_shape[i].y + 1 == down_limt {
+            for mut e in &mut new_shape {
+                if e.y + 1 == down_limt {
                     return None;
                 }
-                new_shape[i].y += 1;
+                e.y += 1;
             }
-            return Some(new_shape);
+            Some(new_shape)
         }
         Dir::LEFT => {
-            let mut new_shape = shape.clone();
+            let mut new_shape = shape.to_owned();
             let left_limit = 0;
-            for i in 0..new_shape.len() {
-                if new_shape[i].x - 1 == left_limit {
+            for mut e in &mut new_shape {
+                if e.x - 1 == left_limit {
                     return None;
                 }
-                new_shape[i].x -= 1;
+                e.x -= 1;
             }
-            return Some(new_shape);
+            Some(new_shape)
         }
         Dir::RIGHT => {
-            let mut new_shape = shape.clone();
+            let mut new_shape = shape.to_owned();
             let right_limit = 11;
-            for i in 0..new_shape.len() {
-                if new_shape[i].x + 1 == right_limit {
+            for e in &mut new_shape {
+                if e.x + 1 == right_limit {
                     return None;
                 }
-                new_shape[i].x += 1;
+                e.x += 1;
             }
-            return Some(new_shape);
+            Some(new_shape)
         }
     }
 }
@@ -124,23 +118,38 @@ fn mv_add_str(y: i32, x: i32, s: String) {
     }
 }
 
-fn find_line(board: &Board, n: usize) -> bool {
+fn find_line(board: &[Point], n: usize) -> bool {
     let mut count = 0;
-    for i in 0..board.len() {
-        if board[i].y == n as i32 {
+    for e in board {
+        if e.y == n as i32 {
             count += 1;
         }
     }
-    return count == 10;
+    count == 10
 }
 
+fn check_line(board: &mut Vec<Point>, count: &mut usize) {
+    for n in 1..17 {
+        let mut new_board: Vec<Point> = Vec::new();
+        if find_line(&board, n) {
+            for mut e in &mut *board {
+                if e.y != n as i32 {
+                    if e.y < n as i32 {
+                        e.y += 1;
+                        new_board.push(*e);
+                    } else {
+                        new_board.push(*e);
+                    }
+                }
+            }
+            *count += 1;
+            *board = new_board;
+        }
+    }
+    clear();
+}
 
-
-
-
-
-
-fn show_count_and_next(count: &usize, next_shape: &Shape) {
+fn show_count_and_next(count: usize, next_shape: &[Point]) {
     let start_x = 12;
     let start_y = 0;
     let width = 10;
@@ -169,13 +178,13 @@ fn show_count_and_next(count: &usize, next_shape: &Shape) {
     }
 }
 
-fn show_shape(shape: &Shape) {
+fn show_shape(shape: &[Point]) {
     for e in shape {
         mvaddch(e.y as i32, e.x as i32, 'O' as u32);
     }
 }
 
-fn show_board(board: &Board) {
+fn show_board(board: &[Point]) {
     for e in board {
         mvaddch(e.y as i32, e.x as i32, 'O' as u32);
     }
@@ -197,50 +206,7 @@ fn show_board(board: &Board) {
     mvaddch(start_y + height + 1, start_x + width + 1, ACS_LRCORNER());
 }
 
-fn check_line(board: &mut Board, count: &mut usize) {
-    if board.len() < 10 {
-        return;
-    }
-    let mut del_lines: Vec<usize> = Vec::new();
-    let first_element = board[0];
-    let mut y_min = first_element.y as usize;
-    let mut y_max = first_element.y as usize;
-    for i in 0..board.len() {
-        if board[i].y < y_min as i32 {
-            y_min = board[i].y as usize;
-        }
-        if board[i].y > y_max as i32 {
-            y_max = board[i].y as usize;
-        }
-    }
-    for i in y_min..y_max + 1 {
-        if find_line(&board, i) {
-            del_lines.push(i);
-        }
-    }
-    if del_lines.len() == 0 {
-        return; 
-    }
-    for i in 0..del_lines.len() {
-        let mut new_board = Vec::new();
-        for j in 0..board.len() {
-            if board[j].y != del_lines[i] as i32 {
-                new_board.push(board[j]);
-            }
-        }
-        for k in 0..new_board.len() {
-            if new_board[k].y < del_lines[i] as i32 {
-                new_board[k].y += 1;
-            }
-        }
-        *board = new_board;
-    }
-    *count += del_lines.len();
-    clear();
-    return;
-}
-
-fn del_next_shape(next_shape: &Shape) {
+fn del_next_shape(next_shape: &[Point]) {
     let start_x = 12;
     let start_y = 0;
     for e in next_shape {
@@ -248,40 +214,38 @@ fn del_next_shape(next_shape: &Shape) {
     }
 }
 
-fn del_shape(shape: &Shape) {
+fn del_shape(shape: &[Point]) {
     for e in shape {
         mvaddch(e.y as i32, e.x as i32, ' ' as u32);
     }
 }
 
-fn board_add(current_shape: &Shape, board: &mut Vec<Point>) {
-    for i in 0..current_shape.len() {
-        if !board.contains(&current_shape[i]) {
-            board.push(current_shape[i])
+fn board_add(current_shape: &[Point], board: &mut Vec<Point>) {
+    for e in current_shape {
+        if !board.contains(e) {
+            board.push(*e)
         }
     }
 }
 
 fn move_shape(
     dir: Dir,
-    current_shape: &mut Shape,
-    next_shape: &mut Shape,
-    board: &mut Board,
+    current_shape: &mut Vec<Point>,
+    next_shape: &mut Vec<Point>,
+    board: &mut Vec<Point>,
 ) -> bool {
     match dir {
         Dir::UP => match next_move(Dir::UP, current_shape) {
             Some(new_shape) => {
                 if is_intersect(&new_shape, board) {
-                    return move_shape(Dir::DOWN, current_shape, next_shape, board);
+                    move_shape(Dir::DOWN, current_shape, next_shape, board)
                 } else {
                     del_shape(current_shape);
                     *current_shape = new_shape;
-                    return true;
+                    true
                 }
             }
-            None => {
-                return move_shape(Dir::DOWN, current_shape, next_shape, board);
-            }
+            None => move_shape(Dir::DOWN, current_shape, next_shape, board),
         },
         Dir::DOWN => match next_move(Dir::DOWN, current_shape) {
             Some(new_shape) => {
@@ -291,11 +255,11 @@ fn move_shape(
                     board_add(current_shape, board);
                     *current_shape = next_shape.clone();
                     *next_shape = random_shape(board);
-                    return false;
+                    false
                 } else {
                     del_shape(current_shape);
                     *current_shape = new_shape;
-                    return true;
+                    true
                 }
             }
             None => {
@@ -304,58 +268,48 @@ fn move_shape(
                 board_add(current_shape, board);
                 *current_shape = next_shape.clone();
                 *next_shape = random_shape(board);
-                return false;
+                false
             }
         },
         Dir::LEFT => match next_move(Dir::LEFT, current_shape) {
             Some(new_shape) => {
                 if is_intersect(&new_shape, &board) {
-                    return move_shape(Dir::DOWN, current_shape, next_shape, board);
+                    move_shape(Dir::DOWN, current_shape, next_shape, board)
                 } else {
                     del_shape(&current_shape);
                     *current_shape = new_shape;
-                    return true;
+                    true
                 }
             }
-            None => {
-                return move_shape(Dir::DOWN, current_shape, next_shape, board);
-            }
+            None => move_shape(Dir::DOWN, current_shape, next_shape, board),
         },
         Dir::RIGHT => match next_move(Dir::RIGHT, current_shape) {
             Some(new_shape) => {
                 if is_intersect(&new_shape, &board) {
-                    return move_shape(Dir::DOWN, current_shape, next_shape, board);
+                    move_shape(Dir::DOWN, current_shape, next_shape, board)
                 } else {
                     del_shape(&current_shape);
                     *current_shape = new_shape;
-                    return true;
+                    true
                 }
             }
-            None => {
-                return move_shape(Dir::DOWN, current_shape, next_shape, board);
-            }
+            None => move_shape(Dir::DOWN, current_shape, next_shape, board),
         },
     }
 }
 
-fn hit_key(current_shape: &mut Shape, next_shape: &mut Shape, board: &mut Board) {
+fn hit_key(current_shape: &mut Vec<Point>, next_shape: &mut Vec<Point>, board: &mut Vec<Point>) {
     match getch() {
         KEY_UP => {
             move_shape(Dir::UP, current_shape, next_shape, board);
             move_shape(Dir::DOWN, current_shape, next_shape, board);
-            return;
         }
-        KEY_DOWN => {
-            while move_shape(Dir::DOWN, current_shape, next_shape, board) {}
-            return;
-        }
+        KEY_DOWN => while move_shape(Dir::DOWN, current_shape, next_shape, board) {},
         KEY_LEFT => {
             move_shape(Dir::LEFT, current_shape, next_shape, board);
-            return;
         }
         KEY_RIGHT => {
             move_shape(Dir::RIGHT, current_shape, next_shape, board);
-            return;
         }
         _ => {
             move_shape(Dir::DOWN, current_shape, next_shape, board);
@@ -363,7 +317,7 @@ fn hit_key(current_shape: &mut Shape, next_shape: &mut Shape, board: &mut Board)
     }
 }
 
-fn random_shape(board: &mut Board) -> Shape {
+fn random_shape(board: &mut Vec<Point>) -> Vec<Point> {
     let mut rng = rand::thread_rng();
     let all_shape: [[Point; 4]; 7] = [
         [
@@ -411,9 +365,9 @@ fn random_shape(board: &mut Board) -> Shape {
     ];
     let shape = all_shape[rng.gen_range(0, 7)].to_vec();
 
-    for i in 0..board.len() {
-        for j in 0..shape.len() {
-            if board[i] == shape[j] {
+    for i in board {
+        for j in &shape {
+            if i == j {
                 endwin();
                 println!("The screen does not have enough space \n Game Over.");
                 process::exit(1);
@@ -433,7 +387,7 @@ fn main() {
     scrollok(stdscr(), false);
     cbreak();
     let mut count = 0;
-    let mut board: Board = Vec::new();
+    let mut board: Vec<Point> = Vec::new();
     let mut current_shape = random_shape(&mut board);
     let mut next_shape = random_shape(&mut board);
     loop {
@@ -446,11 +400,11 @@ fn main() {
         check_line(&mut board, &mut count);
         show_board(&board);
         show_shape(&current_shape);
-        show_count_and_next(&count, &next_shape);
+        show_count_and_next(count, &next_shape);
         refresh();
-        while getch() != -1 {};
+        while getch() != -1 {}
         unsafe {
-            usleep(500000);
+            usleep(500_000);
         }
     }
 }
