@@ -29,7 +29,7 @@ fn is_intersect(current_shape: &[Point], board: &[Point]) -> bool {
     false
 }
 
-fn rotate90_point(point: Point, center: Point) -> Point {
+fn rotate_point_90degree_counter_clockwise(point: Point, center: Point) -> Point {
     Point {
         x: (point.y - center.y) + center.x,
         y: -(point.x - center.x) + center.y,
@@ -64,7 +64,10 @@ fn next_move(dir: Dir, shape: &[Point]) -> Option<Vec<Point>> {
             };
             let mut new_shape = Vec::new();
             for e in shape {
-                new_shape.push(rotate90_point(*e, rotate_center_point));
+                new_shape.push(rotate_point_90degree_counter_clockwise(
+                    *e,
+                    rotate_center_point,
+                ));
             }
             let left_limit = 1;
             let right_limt = 10;
@@ -128,7 +131,7 @@ fn find_line(board: &[Point], n: usize) -> bool {
     count == 10
 }
 
-fn check_line(board: &mut Vec<Point>, count: &mut usize) {
+fn check(board: &mut Vec<Point>, count: &mut usize) {
     for n in 1..17 {
         let mut new_board: Vec<Point> = Vec::new();
         if find_line(&board, n) {
@@ -397,7 +400,7 @@ fn main() {
             return;
         }
         hit_key(&mut current_shape, &mut next_shape, &mut board);
-        check_line(&mut board, &mut count);
+        check(&mut board, &mut count);
         show_board(&board);
         show_shape(&current_shape);
         show_count_and_next(count, &next_shape);
